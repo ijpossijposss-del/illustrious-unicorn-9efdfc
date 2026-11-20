@@ -7,6 +7,7 @@ import { useStore, type Product, type ProductVariant } from '../store/useStore';
 import { AppIcon } from '../components/AppIcon';
 import { sanitizeReceiptHtml } from '../utils/sanitizeReceiptHtml';
 import { createId } from '../utils/createId';
+import { compressProductImage } from '../utils/compressProductImage';
 
 export default function POSPage() {
   const products = useStore((state) => state.products);
@@ -38,6 +39,7 @@ export default function POSPage() {
   const [printPreviewMarkup, setPrintPreviewMarkup] = useState<string | null>(null);
   const [showProductForm, setShowProductForm] = useState(false);
   const [savingScannedProduct, setSavingScannedProduct] = useState(false);
+  const [compressingScannedImage, setCompressingScannedImage] = useState(false);
   const [variantProduct, setVariantProduct] = useState<Product | null>(null);
   const [scannedBarcode, setScannedBarcode] = useState('');
   const [newCategory, setNewCategory] = useState('');
@@ -366,9 +368,6 @@ export default function POSPage() {
     setSavingScannedProduct(true);
     try {
       const productId = createId('p');
-      const image = formData.image.startsWith('data:image/')
-        ? await (await import('../sync/firebaseStorage')).uploadProductImage(formData.image, formData.branchId, productId)
-        : formData.image;
       const newProduct = {
         id: productId,
         name: formData.name,
@@ -379,7 +378,7 @@ export default function POSPage() {
         branchId: formData.branchId,
         active: true,
         barcode: formData.barcode,
-        image,
+        image: formData.image,
         expiry: formData.expiry,
         supplier: formData.supplier,
         description: formData.description,
@@ -401,6 +400,15 @@ export default function POSPage() {
     } finally {
       setSavingScannedProduct(false);
     }
+  };
+
+  const handleScannedProductImage = (file?: File) => {
+    if (!file) return;
+    setCompressingScannedImage(true);
+    void compressProductImage(file)
+      .then((image) => setFormData((current) => ({ ...current, image })))
+      .catch((error: unknown) => toast.error(error instanceof Error ? error.message : 'The selected image could not be processed.'))
+      .finally(() => setCompressingScannedImage(false));
   };
 
   useEffect(() => {
@@ -806,7 +814,7 @@ export default function POSPage() {
             <div className="pos-full-product-grid">
               <div>
                 <div className="product-form-image-box">
-                  {formData.image ? <img src={formData.image} alt="Product preview" /> : <label>🖼️<span>Click to upload image</span><input type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => setFormData((current) => ({ ...current, image: String(reader.result) })); reader.readAsDataURL(file); }} /></label>}
+                  {formData.image ? <img src={formData.image} alt="Product preview" /> : <label>🖼️<span>Click to upload image</span><input type="file" accept="image/*" onChange={(event) => handleScannedProductImage(event.target.files?.[0])} /></label>}
                 </div>
                 <div className="field-grid mt-3">
                   <label className="form-field"><span>Branch *</span><select className="input" value={formData.branchId} onChange={(event) => setFormData({ ...formData, branchId: event.target.value })}>{branches.filter((branch) => branch.active).map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select></label>
@@ -835,7 +843,7 @@ export default function POSPage() {
             {unknownHasVariants && <div className="product-variants-panel"><div className="product-variants-header"><strong>Product variants</strong><button type="button" className="btn secondary" onClick={() => setUnknownVariants((current) => [...current, { id: createId('variant'), name: `Variant ${current.length + 1}`, stock: { [formData.branchId]: 0 }, cost: 0, price: 0 }])}>+ Add Variant</button></div>{unknownVariants.map((variant, index) => <div className="variant-editor" key={variant.id}><div className="variant-editor-title"><span>Variant {index + 1}</span><button type="button" onClick={() => setUnknownVariants((current) => current.filter((item) => item.id !== variant.id))}>×</button></div><div className="variant-grid"><label className="form-field"><span>Variant name *</span><input className="input" value={variant.name} onChange={(event) => setUnknownVariants((current) => current.map((item) => item.id === variant.id ? { ...item, name: event.target.value } : item))} /></label><label className="form-field"><span>Size / volume</span><input className="input" value={variant.size || ''} onChange={(event) => setUnknownVariants((current) => current.map((item) => item.id === variant.id ? { ...item, size: event.target.value } : item))} /></label><label className="form-field"><span>Stock</span><input className="input" type="number" value={variant.stock[formData.branchId] || 0} onChange={(event) => setUnknownVariants((current) => current.map((item) => item.id === variant.id ? { ...item, stock: { ...item.stock, [formData.branchId]: Number(event.target.value) } } : item))} /></label><label className="form-field"><span>Cost</span><input className="input" type="number" value={variant.cost} onChange={(event) => setUnknownVariants((current) => current.map((item) => item.id === variant.id ? { ...item, cost: Number(event.target.value) } : item))} /></label><label className="form-field"><span>Selling price</span><input className="input" type="number" value={variant.price} onChange={(event) => setUnknownVariants((current) => current.map((item) => item.id === variant.id ? { ...item, price: Number(event.target.value) } : item))} /></label><label className="form-field"><span>Barcode</span><input className="input" value={variant.barcode || ''} onChange={(event) => setUnknownVariants((current) => current.map((item) => item.id === variant.id ? { ...item, barcode: event.target.value } : item))} /></label></div></div>)}</div>}
 
             <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-              <button className="btn" style={{ flex: 1 }} onClick={() => void handleSaveProduct()} disabled={savingScannedProduct}>{savingScannedProduct ? 'Saving…' : '✓ Save & Add to Cart'}</button>
+              <button className="btn" style={{ flex: 1 }} onClick={() => void handleSaveProduct()} disabled={savingScannedProduct || compressingScannedImage}>{compressingScannedImage ? 'Preparing image…' : savingScannedProduct ? 'Saving…' : '✓ Save & Add to Cart'}</button>
               <button className="btn secondary" style={{ flex: 1 }} onClick={() => { setShowProductForm(false); setScannedBarcode(''); }}>Cancel</button>
             </div>
           </div>

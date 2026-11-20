@@ -2,6 +2,7 @@ import { useMemo, useRef, useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useStore, type ProductVariant } from '../store/useStore';
 import { createId } from '../utils/createId';
+import { compressProductImage } from '../utils/compressProductImage';
 
 export default function ProductsPage() {
   const products = useStore((state) => state.products);
@@ -37,6 +38,7 @@ export default function ProductsPage() {
   const [imageFit, setImageFit] = useState<'cover' | 'contain' | 'fill'>('cover');
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [processingImage, setProcessingImage] = useState(false);
   const savingRef = useRef(false);
 
   useEffect(() => {
@@ -76,24 +78,11 @@ export default function ProductsPage() {
 
   const handleImage = (file?: File) => {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const source = new Image();
-      source.onload = () => {
-        const maxDimension = 1200;
-        const scale = Math.min(1, maxDimension / Math.max(source.naturalWidth, source.naturalHeight));
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.max(1, Math.round(source.naturalWidth * scale));
-        canvas.height = Math.max(1, Math.round(source.naturalHeight * scale));
-        const context = canvas.getContext('2d');
-        if (!context) return setImagePreview(String(reader.result));
-        context.drawImage(source, 0, 0, canvas.width, canvas.height);
-        setImagePreview(canvas.toDataURL('image/jpeg', 0.82));
-      };
-      source.onerror = () => setImagePreview(String(reader.result));
-      source.src = String(reader.result);
-    };
-    reader.readAsDataURL(file);
+    setProcessingImage(true);
+    void compressProductImage(file)
+      .then(setImagePreview)
+      .catch((error: unknown) => toast.error(error instanceof Error ? error.message : 'The selected image could not be processed.'))
+      .finally(() => setProcessingImage(false));
   };
 
   const handleSave = async () => {
@@ -103,22 +92,6 @@ export default function ProductsPage() {
     setSaving(true);
     try {
       const productId = editingId || createId('p');
-      let image = imagePreview || '';
-      let imageUploadFailed = false;
-      if (imagePreview?.startsWith('data:image/')) {
-        if (import.meta.env.VITE_FIREBASE_STORAGE_ENABLED === 'true') {
-          try {
-            image = await (await import('../sync/firebaseStorage')).uploadProductImage(imagePreview, branchId, productId);
-          } catch (error) {
-            console.warn('Product image upload failed; saving the product without an image.', error);
-            image = '';
-            imageUploadFailed = true;
-          }
-        } else {
-          image = '';
-          imageUploadFailed = true;
-        }
-      }
       const productObj: any = {
         id: productId,
         name: name.trim(),
@@ -129,7 +102,7 @@ export default function ProductsPage() {
         branchId,
         active: true,
         barcode: barcode.trim(),
-        image,
+        image: imagePreview || '',
         imageWidth,
         imageHeight,
         imageFit,
@@ -146,9 +119,6 @@ export default function ProductsPage() {
         addProduct(productObj);
       }
       setShowFormModal(false);
-      if (imageUploadFailed) {
-        toast('Product saved without its image. Firebase Storage is disabled or unavailable.');
-      }
     } catch (error) {
       console.error('Product could not be saved.', error);
       toast.error(error instanceof Error ? error.message : 'Product could not be saved.');
@@ -351,7 +321,7 @@ export default function ProductsPage() {
 
             <div style={{ padding: 16, borderTop: '1px solid #f3f4f6', display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
               <button className="btn secondary" onClick={() => setShowFormModal(false)} style={{ background: '#fff', color: '#0f172a', border: '1px solid #e6e6e6' }}>Cancel</button>
-              <button className="btn" onClick={() => void handleSave()} disabled={saving} style={{ background: 'linear-gradient(135deg, #f97316, #ff8a00)', color: '#fff' }}>{saving ? 'Saving…' : 'Save Product'}</button>
+              <button className="btn" onClick={() => void handleSave()} disabled={saving || processingImage} style={{ background: 'linear-gradient(135deg, #f97316, #ff8a00)', color: '#fff' }}>{processingImage ? 'Preparing image…' : saving ? 'Saving…' : 'Save Product'}</button>
             </div>
           </div>
         </div>

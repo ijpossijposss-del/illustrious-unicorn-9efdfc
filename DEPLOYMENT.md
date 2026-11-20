@@ -8,9 +8,7 @@ The POS uses Firebase Authentication for staff sign-in. Admin-created passwords 
 2. Enable **Authentication → Sign-in method → Email/Password**.
 3. Confirm Realtime Database is enabled in the project.
 4. Deploy the database rules in `database.rules.json` using the Firebase CLI from the repository root: `firebase deploy --only database`.
-5. Enable Firebase Storage and deploy `storage.rules` with `firebase deploy --only storage`. Product photos are stored in Storage rather than embedded in Realtime Database records.
-   Firebase Storage in the new project currently requires upgrading to the Blaze billing plan; that may incur charges.
-6. In **Project settings → Service accounts**, create/download a private key. Keep it private; do not commit it or put it in a `VITE_` variable.
+5. In **Project settings → Service accounts**, create/download a private key. Keep it private; do not commit it or put it in a `VITE_` variable.
 
 ## 2. Configure Netlify
 
@@ -28,7 +26,6 @@ Add these environment variables in the Netlify site settings:
 | `VITE_FIREBASE_DATABASE_URL` | `https://ijposssss-default-rtdb.europe-west1.firebasedatabase.app` |
 | `VITE_FIREBASE_PROJECT_ID` | `ijposssss` |
 | `VITE_FIREBASE_STORAGE_BUCKET` | `ijposssss.firebasestorage.app` |
-| `VITE_FIREBASE_STORAGE_ENABLED` | `false` unless Firebase Storage is enabled and configured for browser uploads |
 | `VITE_FIREBASE_MESSAGING_SENDER_ID` | `246845126496` |
 | `VITE_FIREBASE_APP_ID` | `1:246845126496:web:34143c0b99e56afee55005` |
 | `VITE_FIREBASE_MEASUREMENT_ID` | `G-DY3K1EM33J` |
@@ -38,7 +35,7 @@ Add these environment variables in the Netlify site settings:
 
 The `VITE_FIREBASE_*` settings are public browser configuration; the Admin service-account JSON is a secret. Set Netlify's **Functions** environment variables for the same deploy context as the site build. Redeploy after changing variables.
 
-Product records can be saved without product photos. Keep `VITE_FIREBASE_STORAGE_ENABLED=false` on the Firebase free plan or when browser uploads are not configured. To upload photos, enable and configure Firebase Storage (which may require Blaze billing), configure the bucket's CORS policy for the deployed app origin, and set this variable to `true`; failed image uploads do not block saving product details.
+Product photos are resized and compressed to at most 100 KB, then saved in each product record in Realtime Database. This avoids Cloud Storage billing and browser CORS setup on the free plan, but images count toward database storage and are downloaded with the product catalog on signed-in devices. Keep catalog images limited to product thumbnails.
 
 ## 3. Create the first admin and staff
 
