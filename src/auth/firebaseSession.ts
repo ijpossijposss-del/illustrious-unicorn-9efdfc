@@ -3,7 +3,7 @@ import { onAuthStateChanged, signOut, type User as FirebaseUser } from 'firebase
 import { get, ref, runTransaction } from 'firebase/database';
 import { auth, database, sharedDataPath } from '../sync/firebase';
 import { normalizeUsers, useStore, type User } from '../store/useStore';
-import { OWNER_ADMIN_EMAIL } from './credentials';
+import { isOwnerAdminEmail, OWNER_ADMIN_EMAIL } from './credentials';
 
 export async function syncAuthenticatedUser(firebaseUser: FirebaseUser) {
   const [token, snapshot, branchesSnapshot] = await Promise.all([
@@ -11,15 +11,15 @@ export async function syncAuthenticatedUser(firebaseUser: FirebaseUser) {
     get(ref(database, `${sharedDataPath}/users`)),
     get(ref(database, `${sharedDataPath}/branches`)),
   ]);
-  const isOwnerAccount = typeof token.claims.email === 'string'
-    && token.claims.email.trim().toLowerCase() === OWNER_ADMIN_EMAIL;
+  const isOwnerAccount = isOwnerAdminEmail(token.claims.email || firebaseUser.email);
   const claimedRole = isOwnerAccount ? 'admin' : token.claims.role;
   if (claimedRole !== 'admin' && claimedRole !== 'seller' && claimedRole !== 'staff') {
     throw new Error('This account has no assigned POS role. Ask your admin to check the account.');
   }
   const role: User['role'] = claimedRole;
   let users = Array.isArray(snapshot.val()) ? normalizeUsers(snapshot.val() as User[]) : [];
-  let profile = users.find((user) => user.id === firebaseUser.uid);
+  let profile = users.find((user) => user.id === firebaseUser.uid)
+    || (isOwnerAccount ? users.find((user) => isOwnerAdminEmail(user.email)) : undefined);
   if (isOwnerAccount) {
     const ownerProfile: User = {
       ...profile,
@@ -36,7 +36,9 @@ export async function syncAuthenticatedUser(firebaseUser: FirebaseUser) {
     const usersRef = ref(database, `${sharedDataPath}/users`);
     const result = await runTransaction(usersRef, (currentValue) => {
       const currentUsers = Array.isArray(currentValue) ? currentValue : [];
-      return [...currentUsers.filter((user: { id?: string }) => user?.id !== firebaseUser.uid), ownerProfile];
+      return [...currentUsers.filter((user: { id?: string; email?: string }) => (
+        user?.id !== firebaseUser.uid && !isOwnerAdminEmail(user?.email)
+      )), ownerProfile];
     });
     if (!result.committed) throw new Error('Could not initialize the owner profile in Realtime Database.');
     users = normalizeUsers(Array.isArray(result.snapshot.val()) ? result.snapshot.val() as User[] : []);

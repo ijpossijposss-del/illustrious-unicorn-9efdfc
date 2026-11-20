@@ -39,7 +39,7 @@ Product photos are resized and compressed to at most 100 KB, then saved in each 
 
 ## 3. Create the first admin and staff
 
-1. The owner account `ijpossijposss@gmail.com` can sign in using that email and its Firebase Authentication password. The app recognizes only that exact Firebase-authenticated email as the owner admin and initializes its POS profile in Realtime Database. This does not bypass Firebase Authentication.
+1. The owner account `ijpossijposss@gmail.com` signs in using that email and its Firebase Authentication password. A successfully authenticated Firebase ID token for that email is consistently recognized as the owner admin by the app and staff-management function. The app repairs the owner's Realtime Database profile by matching the authenticated UID and owner email. This does not bypass Firebase Authentication or grant admin access based on a typed username alone.
 2. Deploy `database.rules.json` after making this owner-email change. The database rules, not just the browser UI, must recognize this account as the owner admin.
 3. Staff account creation, updates, and deletion use the Netlify staff function and Firebase Admin SDK. Keep `FIREBASE_SERVICE_ACCOUNT`, `FIREBASE_PROJECT_ID`, and `FIREBASE_DATABASE_URL` configured in Netlify for those operations. Admins create staff from **Staff Management → Add Staff** with a unique name, password, role, and branch; staff sign in using that name and password. A deployment that hosts only the static `dist` files does not include this function.
 4. The bootstrap endpoint is not needed for this owner-email login path.

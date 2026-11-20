@@ -1,7 +1,7 @@
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getDatabase } from 'firebase-admin/database';
-import { OWNER_ADMIN_EMAIL, usernameToAuthEmail as getLoginEmail } from '../../src/auth/credentials';
+import { isOwnerAdminEmail, usernameToAuthEmail as getLoginEmail } from '../../src/auth/credentials';
 
 function getFirebaseAdminApp() {
   const existing = getApps()[0];
@@ -60,7 +60,7 @@ export async function requireAdmin(authorization?: string) {
   const token = authorization?.match(/^Bearer (.+)$/i)?.[1];
   if (!token) throw new Error('Sign in as an admin to manage staff accounts.');
   const decoded = await getAdminAuth().verifyIdToken(token);
-  if (decoded.role !== 'admin' && decoded.email?.toLowerCase() !== OWNER_ADMIN_EMAIL) {
+  if (decoded.role !== 'admin' && !isOwnerAdminEmail(decoded.email)) {
     throw new Error('Only an admin can manage staff accounts.');
   }
   return decoded;

@@ -1,6 +1,10 @@
 export const DEFAULT_STAFF_PERMISSIONS = ['view-dashboard', 'use-pos', 'view-products', 'view-eod', 'view-operations', 'generate-reports'];
 export const OWNER_ADMIN_EMAIL = 'ijpossijposss@gmail.com';
 
+export function isOwnerAdminEmail(email: unknown): boolean {
+  return typeof email === 'string' && email.trim().toLowerCase() === OWNER_ADMIN_EMAIL;
+}
+
 export function usernameToAuthEmail(username: string) {
   const normalized = username.trim().toLowerCase();
   if (!normalized || normalized.length > 100) {
