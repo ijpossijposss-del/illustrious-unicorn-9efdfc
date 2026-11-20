@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useStore } from '../store/useStore';
 import { getItem, setItem } from '../utils/safeStorage';
-import { signInWithCustomToken, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { auth } from '../sync/firebase';
-import { OWNER_ADMIN_EMAIL, usernameToAuthEmail } from './credentials';
+import { usernameToAuthEmail } from './credentials';
 import { syncAuthenticatedUser } from './firebaseSession';
 
 export default function LoginPage() {
@@ -42,34 +42,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleBootstrap = async () => {
-    setBusy(true);
-    try {
-      const response = await fetch('/.netlify/functions/bootstrap-admin', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
-      if (response.status === 404) {
-        throw new Error('Admin setup is not deployed. Deploy the project from its repository with Netlify Functions enabled; uploading only the dist folder does not deploy this setup service.');
-      }
-      const result: { customToken?: string; error?: string } = response.headers.get('content-type')?.includes('application/json')
-        ? await response.json() as { customToken?: string; error?: string }
-        : {};
-      if (!response.ok || !result.customToken) throw new Error(result.error || 'Initial admin setup failed.');
-      const credential = await signInWithCustomToken(auth, result.customToken);
-      await syncAuthenticatedUser(credential.user);
-      navigate('/dashboard');
-    } catch (error) {
-      if (auth.currentUser) {
-        await signOut(auth).catch((signOutError: unknown) => console.error('Could not clear a failed admin setup session.', signOutError));
-      }
-      toast.error(error instanceof Error ? error.message : 'Initial admin setup failed.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
   return (
     <div className="container" style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
       <div className="card login-card" style={{ width: 'min(420px, 100%)' }}>
@@ -86,9 +58,6 @@ export default function LoginPage() {
             Remember me
           </label>
           <button className="btn" type="submit" disabled={busy}>{busy ? 'Please wait…' : 'Sign in'}</button>
-          {username.trim().toLowerCase() !== OWNER_ADMIN_EMAIL && (
-            <button className="btn secondary" type="button" onClick={() => void handleBootstrap()} disabled={busy}>Set up initial admin</button>
-          )}
         </form>
         <p style={{ color: '#6b7280', fontSize: 12, marginTop: 12 }}>The project owner signs in with the Firebase account email and password. Staff sign in with the names and passwords created by the admin.</p>
       </div>

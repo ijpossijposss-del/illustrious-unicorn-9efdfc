@@ -50,17 +50,7 @@ test('Firebase owner email is used directly for sign-in', async ({ page }) => {
   expect(submittedEmail).toBe('ijpossijposss@gmail.com');
 });
 
-test('admin setup explains when the Netlify function has not been deployed', async ({ page }) => {
-  await page.route('**/.netlify/functions/bootstrap-admin', (route) => route.fulfill({
-    status: 404,
-    contentType: 'text/html',
-    body: '<!doctype html><title>Not found</title>',
-  }));
-
+test('login no longer exposes initial-admin setup', async ({ page }) => {
   await page.goto('/login');
-  await page.getByLabel('Email or name created by the admin').fill('Admin');
-  await page.getByPlaceholder('Password').fill('ExamplePassword123!');
-  await page.getByRole('button', { name: 'Set up initial admin' }).click();
-
-  await expect(page.getByText(/Admin setup is not deployed/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Set up initial admin' })).toHaveCount(0);
 });
