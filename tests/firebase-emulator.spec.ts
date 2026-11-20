@@ -24,7 +24,7 @@ test('@firebase-emulator admin creates branch, product, sale and staff; staff pe
 
   await adminPage.goto('/login');
   await expect(adminPage.getByRole('heading', { name: 'Super POS Investment Login' })).toBeVisible();
-  await adminPage.getByLabel('Name created by the admin').fill(process.env.BOOTSTRAP_ADMIN_USERNAME!);
+  await adminPage.getByLabel('Email or name created by the admin').fill(process.env.BOOTSTRAP_ADMIN_USERNAME!);
   await adminPage.getByPlaceholder('Password').fill(process.env.BOOTSTRAP_ADMIN_PASSWORD!);
   await adminPage.getByRole('button', { name: 'Set up initial admin' }).click();
   await expect(adminPage).toHaveURL(/\/dashboard$/);
@@ -79,7 +79,7 @@ test('@firebase-emulator admin creates branch, product, sale and staff; staff pe
     if (message.type() === 'error') console.error('Firebase emulator staff browser console:', message.text());
   });
   await staffPage.goto('/login');
-  await staffPage.getByLabel('Name created by the admin').fill(staffName);
+  await staffPage.getByLabel('Email or name created by the admin').fill(staffName);
   await staffPage.getByPlaceholder('Password').fill(staffPassword);
   await staffPage.getByRole('button', { name: 'Sign in' }).click();
   await expect(staffPage).toHaveURL(/\/pos$/);

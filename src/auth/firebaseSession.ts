@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { onAuthStateChanged, signOut, type User as FirebaseUser } from 'firebase/auth';
-import { get, ref } from 'firebase/database';
+import { get, ref, runTransaction } from 'firebase/database';
 import { auth, database, sharedDataPath } from '../sync/firebase';
 import { normalizeUsers, useStore, type User } from '../store/useStore';
+import { OWNER_ADMIN_EMAIL } from './credentials';
 
 export async function syncAuthenticatedUser(firebaseUser: FirebaseUser) {
   const [token, snapshot, branchesSnapshot] = await Promise.all([
@@ -10,13 +11,37 @@ export async function syncAuthenticatedUser(firebaseUser: FirebaseUser) {
     get(ref(database, `${sharedDataPath}/users`)),
     get(ref(database, `${sharedDataPath}/branches`)),
   ]);
-  const claimedRole = token.claims.role;
+  const isOwnerAccount = typeof token.claims.email === 'string'
+    && token.claims.email.trim().toLowerCase() === OWNER_ADMIN_EMAIL;
+  const claimedRole = isOwnerAccount ? 'admin' : token.claims.role;
   if (claimedRole !== 'admin' && claimedRole !== 'seller' && claimedRole !== 'staff') {
     throw new Error('This account has no assigned POS role. Ask your admin to check the account.');
   }
   const role: User['role'] = claimedRole;
-  const users = Array.isArray(snapshot.val()) ? normalizeUsers(snapshot.val() as User[]) : [];
-  const profile = users.find((user) => user.id === firebaseUser.uid);
+  let users = Array.isArray(snapshot.val()) ? normalizeUsers(snapshot.val() as User[]) : [];
+  let profile = users.find((user) => user.id === firebaseUser.uid);
+  if (isOwnerAccount) {
+    const ownerProfile: User = {
+      ...profile,
+      id: firebaseUser.uid,
+      name: profile?.name || firebaseUser.displayName || 'Admin',
+      email: OWNER_ADMIN_EMAIL,
+      role: 'admin',
+      position: profile?.position || 'Owner',
+      branchId: profile?.branchId || 'b1',
+      staffNumber: profile?.staffNumber || 'ADM-001',
+      active: true,
+      createdAt: profile?.createdAt || new Date().toISOString(),
+    };
+    const usersRef = ref(database, `${sharedDataPath}/users`);
+    const result = await runTransaction(usersRef, (currentValue) => {
+      const currentUsers = Array.isArray(currentValue) ? currentValue : [];
+      return [...currentUsers.filter((user: { id?: string }) => user?.id !== firebaseUser.uid), ownerProfile];
+    });
+    if (!result.committed) throw new Error('Could not initialize the owner profile in Realtime Database.');
+    users = normalizeUsers(Array.isArray(result.snapshot.val()) ? result.snapshot.val() as User[] : []);
+    profile = users.find((user) => user.id === firebaseUser.uid);
+  }
   if (!profile || !profile.active || profile.role !== role) {
     throw new Error('This account is inactive or its POS profile is missing. Ask your admin for help.');
   }

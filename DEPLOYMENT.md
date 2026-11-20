@@ -4,18 +4,19 @@ The POS uses Firebase Authentication for staff sign-in. Admin-created passwords 
 
 ## 1. Configure Firebase
 
-1. In Firebase Console, open project `super-pos-e13f1`.
+1. In Firebase Console, open project `ijposssss`.
 2. Enable **Authentication → Sign-in method → Email/Password**.
 3. Confirm Realtime Database is enabled in the project.
 4. Deploy the database rules in `database.rules.json` using the Firebase CLI from the repository root: `firebase deploy --only database`.
 5. Enable Firebase Storage and deploy `storage.rules` with `firebase deploy --only storage`. Product photos are stored in Storage rather than embedded in Realtime Database records.
+   Firebase Storage in the new project currently requires upgrading to the Blaze billing plan; that may incur charges.
 6. In **Project settings → Service accounts**, create/download a private key. Keep it private; do not commit it or put it in a `VITE_` variable.
 
 ## 2. Configure Netlify
 
 Import this repository into Netlify and deploy from the repository root. The checked-in `netlify.toml` sets the build command, `dist` publish directory, serverless functions, and SPA route fallback. The build also copies the SPA fallback into `dist/_redirects`, so direct routes such as `/login` work when static files are used.
 
-**Do not use a manual `dist`-folder upload for this app's first deployment.** It only uploads static files and does not deploy `netlify/functions/bootstrap-admin` or `netlify/functions/staff`; initial admin setup and staff account management will return 404. Use a Git-connected deploy or run `npx netlify deploy --build --prod` from the repository root after linking the site with `npx netlify link`.
+**Do not use a manual `dist`-folder upload if you need staff account management.** It only uploads static files and does not deploy `netlify/functions/staff`; staff account management will return 404. The owner can still sign in through Firebase Authentication when the current database rules are published. Use a Git-connected deploy or run `npx netlify deploy --build --prod` from the repository root after linking the site with `npx netlify link`.
 
 Add these environment variables in the Netlify site settings:
 
@@ -23,28 +24,27 @@ Add these environment variables in the Netlify site settings:
 |---|---|
 | `VITE_PUBLIC_APP_URL` | Your final HTTPS Netlify domain |
 | `VITE_FIREBASE_API_KEY` | Firebase web-app API key |
-| `VITE_FIREBASE_AUTH_DOMAIN` | `super-pos-e13f1.firebaseapp.com` |
-| `VITE_FIREBASE_DATABASE_URL` | `https://super-pos-e13f1-default-rtdb.firebaseio.com` |
-| `VITE_FIREBASE_PROJECT_ID` | `super-pos-e13f1` |
-| `VITE_FIREBASE_STORAGE_BUCKET` | Firebase web-app storage bucket |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase web-app sender ID |
-| `VITE_FIREBASE_APP_ID` | Firebase web-app app ID |
-| `FIREBASE_PROJECT_ID` | `super-pos-e13f1` |
-| `FIREBASE_DATABASE_URL` | `https://super-pos-e13f1-default-rtdb.firebaseio.com` |
+| `VITE_FIREBASE_AUTH_DOMAIN` | `ijposssss.firebaseapp.com` |
+| `VITE_FIREBASE_DATABASE_URL` | `https://ijposssss-default-rtdb.europe-west1.firebasedatabase.app` |
+| `VITE_FIREBASE_PROJECT_ID` | `ijposssss` |
+| `VITE_FIREBASE_STORAGE_BUCKET` | `ijposssss.firebasestorage.app` |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | `246845126496` |
+| `VITE_FIREBASE_APP_ID` | `1:246845126496:web:34143c0b99e56afee55005` |
+| `VITE_FIREBASE_MEASUREMENT_ID` | `G-DY3K1EM33J` |
+| `FIREBASE_PROJECT_ID` | `ijposssss` |
+| `FIREBASE_DATABASE_URL` | `https://ijposssss-default-rtdb.europe-west1.firebasedatabase.app` |
 | `FIREBASE_SERVICE_ACCOUNT` | Entire service-account JSON, stored as a secret |
-| `BOOTSTRAP_ADMIN_USERNAME` | The initial admin's chosen name |
-| `BOOTSTRAP_ADMIN_PASSWORD` | A strong initial admin password (at least 6 characters) |
 
-The `VITE_FIREBASE_*` settings are public browser configuration; the Admin service-account JSON and bootstrap password are secrets. Set Netlify's **Functions** environment variables for the same deploy context as the site build. Redeploy after changing variables.
+The `VITE_FIREBASE_*` settings are public browser configuration; the Admin service-account JSON is a secret. Set Netlify's **Functions** environment variables for the same deploy context as the site build. Redeploy after changing variables.
 
 ## 3. Create the first admin and staff
 
-1. Open the deployed site and enter the exact `BOOTSTRAP_ADMIN_USERNAME` and `BOOTSTRAP_ADMIN_PASSWORD` values.
-2. Select **Set up initial admin** once. This creates the Firebase Auth account and admin role, removes the old local-only sign-in marker, and signs the admin in. Normal sign-in will fail until this initial setup has succeeded and created the Firebase account. Existing local-only staff accounts do not have Firebase identities; recreate them from Staff Management with new passwords.
-3. Remove `BOOTSTRAP_ADMIN_USERNAME` and `BOOTSTRAP_ADMIN_PASSWORD` from Netlify once setup succeeds; keep the Firebase Admin service-account variables for staff management.
-4. The admin opens **Staff Management → Add Staff**, enters a unique name and password, and selects the role and branch. Staff do not need an email address; they sign in with that exact name and password. The app creates an internal Firebase sign-in identifier from the name, so no staff email inbox is required. Branch assignment and permissions are synchronized through Firebase; when an account is moved to a branch without an existing permission set, the backend initializes the standard staff permissions for that branch.
+1. The owner account `ijpossijposss@gmail.com` can sign in using that email and its Firebase Authentication password. The app recognizes only that exact Firebase-authenticated email as the owner admin and initializes its POS profile in Realtime Database. This does not bypass Firebase Authentication.
+2. Deploy `database.rules.json` after making this owner-email change. The database rules, not just the browser UI, must recognize this account as the owner admin.
+3. Staff account creation, updates, and deletion use the Netlify staff function and Firebase Admin SDK. Keep `FIREBASE_SERVICE_ACCOUNT`, `FIREBASE_PROJECT_ID`, and `FIREBASE_DATABASE_URL` configured in Netlify for those operations. Admins create staff from **Staff Management → Add Staff** with a unique name, password, role, and branch; staff sign in using that name and password. A deployment that hosts only the static `dist` files does not include this function.
+4. The bootstrap endpoint is not needed for this owner-email login path.
 
-The initial admin is provisioned only through the protected setup endpoint. The app does not ship a shared default admin or cashier password. Staff roles cannot write the user or permission records directly in Realtime Database.
+The app does not ship a shared default admin or cashier password. Staff roles cannot write the user or permission records directly in Realtime Database.
 
 A fresh database starts with the Main Branch and no sample catalog. Add or import real products after the initial admin signs in; the app no longer seeds a large demo catalog automatically.
 

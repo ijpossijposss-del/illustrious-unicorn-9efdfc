@@ -3,19 +3,19 @@
     "pos": {
       "public-catalog": {
         ".read": true,
-        ".write": "auth != null && auth.token.role === 'admin'"
+        ".write": "auth != null && (auth.token.role === 'admin' || auth.token.email === 'ijpossijposss@gmail.com')"
       },
       "shared-state": {
         ".read": "auth != null",
         "$key": {
-          ".write": "auth != null && (auth.token.role === 'admin' || ($key !== 'users' && $key !== 'staffPermissions' && $key !== 'branches' && $key !== 'categories' && $key !== 'receiptSettings' && $key !== 'printerSettings' && $key !== 'stockTransfers' && $key !== 'notifications' && $key !== 'paymentTerminal'))"
+          ".write": "auth != null && (auth.token.role === 'admin' || auth.token.email === 'ijpossijposss@gmail.com' || ($key !== 'users' && $key !== 'staffPermissions' && $key !== 'branches' && $key !== 'categories' && $key !== 'receiptSettings' && $key !== 'printerSettings' && $key !== 'stockTransfers' && $key !== 'notifications' && $key !== 'paymentTerminal'))"
         }
       },
       "public-orders": {
         ".read": "auth != null",
         "$branchId": {
           "$orderId": {
-            ".write": "(auth != null && (auth.token.role === 'admin' || (data.exists() && newData.exists() && newData.child('id').val() === $orderId && newData.child('branchId').val() === $branchId))) || (!data.exists() && newData.child('id').val() === $orderId && newData.child('branchId').val() === $branchId && newData.child('status').val() === 'new' && newData.child('customerName').isString() && newData.child('phone').isString())"
+            ".write": "(auth != null && (auth.token.role === 'admin' || auth.token.email === 'ijpossijposss@gmail.com' || (data.exists() && newData.exists() && newData.child('id').val() === $orderId && newData.child('branchId').val() === $branchId))) || (!data.exists() && newData.child('id').val() === $orderId && newData.child('branchId').val() === $branchId && newData.child('status').val() === 'new' && newData.child('customerName').isString() && newData.child('phone').isString())"
           }
         }
       }

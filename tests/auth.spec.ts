@@ -8,7 +8,7 @@ test('legacy local credentials cannot sign in', async ({ page }) => {
   }));
 
   await page.goto('/login');
-  await page.getByLabel('Name created by the admin').fill('admin');
+  await page.getByLabel('Email or name created by the admin').fill('admin');
   await page.getByPlaceholder('Password').fill('admin123');
   await page.getByRole('button', { name: 'Sign in' }).click();
 
@@ -21,6 +21,26 @@ test('legacy local credentials cannot sign in', async ({ page }) => {
   expect(isAuthenticated).toBe(false);
 });
 
+test('Firebase owner email is used directly for sign-in', async ({ page }) => {
+  let submittedEmail = '';
+  await page.route('**/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword**', async (route) => {
+    submittedEmail = route.request().postDataJSON().email;
+    await route.fulfill({
+      status: 400,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: { message: 'INVALID_LOGIN_CREDENTIALS' } }),
+    });
+  });
+
+  await page.goto('/login');
+  await page.getByLabel('Email or name created by the admin').fill('ijpossijposss@gmail.com');
+  await page.getByPlaceholder('Password').fill('NotARealPassword123!');
+  await page.getByRole('button', { name: 'Sign in' }).click();
+
+  await expect(page.getByText('Incorrect name or password')).toBeVisible();
+  expect(submittedEmail).toBe('ijpossijposss@gmail.com');
+});
+
 test('admin setup explains when the Netlify function has not been deployed', async ({ page }) => {
   await page.route('**/.netlify/functions/bootstrap-admin', (route) => route.fulfill({
     status: 404,
@@ -29,7 +49,7 @@ test('admin setup explains when the Netlify function has not been deployed', asy
   }));
 
   await page.goto('/login');
-  await page.getByLabel('Name created by the admin').fill('Admin');
+  await page.getByLabel('Email or name created by the admin').fill('Admin');
   await page.getByPlaceholder('Password').fill('ExamplePassword123!');
   await page.getByRole('button', { name: 'Set up initial admin' }).click();
 

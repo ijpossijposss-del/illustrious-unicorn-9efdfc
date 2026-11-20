@@ -3,14 +3,14 @@ import { connectAuthEmulator, getAuth } from 'firebase/auth';
 import { connectDatabaseEmulator, getDatabase } from 'firebase/database';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyD5ujCieBfNvyl8muYn3_jHsg_G2BV8fKQ',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'super-pos-e13f1.firebaseapp.com',
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || 'https://super-pos-e13f1-default-rtdb.firebaseio.com',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'super-pos-e13f1',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'super-pos-e13f1.firebasestorage.app',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '1049151220438',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:1049151220438:web:017b95265b0b9c7b347777',
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-XEFP6M24LV',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyCf8U2YYgz7jDuR7qXYxgFPtUYLQdwWlIA',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'ijposssss.firebaseapp.com',
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || 'https://ijposssss-default-rtdb.europe-west1.firebasedatabase.app',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'ijposssss',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'ijposssss.firebasestorage.app',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '246845126496',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:246845126496:web:34143c0b99e56afee55005',
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-DY3K1EM33J',
 };
 
 export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
