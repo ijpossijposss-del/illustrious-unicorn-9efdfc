@@ -1,0 +1,41 @@
+{
+  "name": "jann-pos",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "vite --config vite.config.ts",
+    "build": "tsc -b && vite build --config vite.config.ts && node scripts/copy-netlify-redirects.mjs",
+    "preview": "vite preview --config vite.config.ts",
+    "test:e2e": "playwright test",
+    "test:firebase:browser": "playwright test --grep @firebase-emulator"
+  },
+  "dependencies": {
+    "firebase": "^12.18.0",
+    "firebase-admin": "^14.5.1",
+    "framer-motion": "^11.11.9",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
+    "qrcode": "^1.5.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-hot-toast": "^2.1.0",
+    "react-router-dom": "^6.21.2",
+    "xlsx": "^0.18.5",
+    "zustand": "^4.5.6"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^18.3.10",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.1",
+    "netlify-cli": "^27.20.0",
+    "playwright": "^1.61.1",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  }
+}

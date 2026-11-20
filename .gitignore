@@ -1,0 +1,20 @@
+# Dependencies and build output
+node_modules/
+dist/
+.netlify/
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+
+# Local logs and generated test files
+*.log
+build-check.txt
+build-log.txt
+out.html
+playwright-list.txt
+test-results/
+playwright-report/
+*.tsbuildinfo
+.tsbuild/
