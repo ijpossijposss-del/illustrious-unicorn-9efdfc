@@ -103,9 +103,22 @@ export default function ProductsPage() {
     setSaving(true);
     try {
       const productId = editingId || createId('p');
-      const image = imagePreview?.startsWith('data:image/')
-        ? await (await import('../sync/firebaseStorage')).uploadProductImage(imagePreview, branchId, productId)
-        : imagePreview || '';
+      let image = imagePreview || '';
+      let imageUploadFailed = false;
+      if (imagePreview?.startsWith('data:image/')) {
+        if (import.meta.env.VITE_FIREBASE_STORAGE_ENABLED === 'true') {
+          try {
+            image = await (await import('../sync/firebaseStorage')).uploadProductImage(imagePreview, branchId, productId);
+          } catch (error) {
+            console.warn('Product image upload failed; saving the product without an image.', error);
+            image = '';
+            imageUploadFailed = true;
+          }
+        } else {
+          image = '';
+          imageUploadFailed = true;
+        }
+      }
       const productObj: any = {
         id: productId,
         name: name.trim(),
@@ -133,6 +146,9 @@ export default function ProductsPage() {
         addProduct(productObj);
       }
       setShowFormModal(false);
+      if (imageUploadFailed) {
+        toast('Product saved without its image. Firebase Storage is disabled or unavailable.');
+      }
     } catch (error) {
       console.error('Product could not be saved.', error);
       toast.error(error instanceof Error ? error.message : 'Product could not be saved.');

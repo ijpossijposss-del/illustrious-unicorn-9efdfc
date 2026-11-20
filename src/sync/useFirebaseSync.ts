@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { get, onValue, ref, set } from 'firebase/database';
+import toast from 'react-hot-toast';
 import { useStore } from '../store/useStore';
 import { database, publicCatalogPath, publicOrdersPath, sharedDataPath } from './firebase';
 import { registerFlushHandler } from './outgoingSync';
@@ -134,6 +135,7 @@ export async function forceRefreshFromFirebase() {
 export function useFirebaseSync() {
   const firebaseDataInitialized = useRef(false);
   const applyingRemoteOrders = useRef(false);
+  const syncFailureReported = useRef(false);
   const isAuthenticated = useStore((state) => state.isAuthenticated);
   const lastSyncRef = useRef<number>(0);
   const MIN_SYNC_INTERVAL = 5 * 60 * 1000; // 5 minutes
@@ -207,6 +209,7 @@ export function useFirebaseSync() {
         if (currentUser?.role === 'admin' && keysToWrite.some((key) => key === 'products' || key === 'branches')) {
           await set(ref(database, publicCatalogPath), getPublicCatalog(snapshot));
         }
+        syncFailureReported.current = false;
         keysToWrite.forEach((key) => {
           if (pendingVersions.get(key) === versionsToWrite.get(key)) {
             pendingKeys.delete(key);
@@ -223,6 +226,10 @@ export function useFirebaseSync() {
         localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify({ updatedAt: Date.now(), keys: Array.from(pendingKeys) }));
         useStore.getState().setSyncStatus('retrying');
         console.warn('Firebase write failed; local data remains available.', error);
+        if (!syncFailureReported.current) {
+          toast.error('Changes could not be saved to Firebase. Check your connection and database permissions; this device may be the only copy.');
+          syncFailureReported.current = true;
+        }
       } finally {
         releaseWriteLock();
         activeWrite = null;

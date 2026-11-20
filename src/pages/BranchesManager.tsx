@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useStore } from '../store/useStore';
 import { createId } from '../utils/createId';
 
@@ -41,7 +42,10 @@ export default function BranchesManager() {
   };
 
   const handleAdd = () => {
-    if (!name.trim() || !location.trim()) return;
+    if (!name.trim() || !location.trim()) {
+      toast.error('Enter a branch name and location.');
+      return;
+    }
     const branch = {
       id: createId('b'),
       name: name.trim(),
