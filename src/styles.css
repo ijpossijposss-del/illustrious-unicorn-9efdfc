@@ -680,22 +680,22 @@ textarea.input {
 .pos-products-panel .input,
 .pos-cart-panel .input { min-height: 38px; padding: 7px 10px; }
 .pos-product-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-content: start;
-  grid-auto-rows: minmax(188px, auto);
-  gap: 8px !important;
+  grid-auto-rows: minmax(200px, auto);
+  gap: 10px !important;
 }
 .pos-products-panel .product-card {
-  min-height: 168px;
-  padding: 8px;
-  gap: 5px;
+  min-height: 180px;
+  padding: 10px;
+  gap: 6px;
   border-radius: 10px;
 }
 .pos-products-panel .product-card:hover { transform: none; box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08); }
-.pos-products-panel .product-thumb { height: 76px; border-radius: 6px; }
-.pos-products-panel .product-title { min-height: 26px; font-size: 11px; }
-.pos-products-panel .product-subtitle { font-size: 10px; }
-.pos-products-panel .stock-pill { font-size: 10px; }
+.pos-products-panel .product-thumb { height: 88px; border-radius: 7px; }
+.pos-products-panel .product-title { min-height: 28px; font-size: 12px; }
+.pos-products-panel .product-subtitle { font-size: 11px; }
+.pos-products-panel .stock-pill { font-size: 11px; }
 .pos-category-filters {
   min-height: 36px;
   align-items: center;
