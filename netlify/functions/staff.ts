@@ -70,7 +70,6 @@ export const handler = async (event: FunctionEvent) => {
         phone: input.phone?.trim() || '',
         active: true,
         createdAt: new Date().toISOString(),
-        firstLogin: true,
       };
 
       try {

@@ -1,7 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useStore } from '../store/useStore';
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { AppIcon, type AppIconName } from '../components/AppIcon';
 import { getLocalDateKey, getSaleDateKey, getSaleProfit, getSaleRevenue, getSaleTimestamp } from '../utils/salesMetrics';
 
@@ -13,9 +11,6 @@ export default function Dashboard() {
   const canViewProfit = useStore((s) => s.canViewProfit);
   const products = useStore((s) => s.products);
   const branches = useStore((s) => s.branches);
-  const setUsers = useStore((s) => s.setUsers);
-  const navigate = useNavigate();
-  const [showOnboard, setShowOnboard] = useState(false);
   const scopedBranchId = currentUser?.role === 'admin' ? selectedBranch : currentUser?.branchId || selectedBranch;
   const scopedSales = useMemo(
     () => scopedBranchId === 'all' ? sales : sales.filter((sale) => sale.branchId === scopedBranchId),
@@ -124,19 +119,6 @@ export default function Dashboard() {
       {label && <span className="stat-label">{locked ? 'Admin approval required' : label}</span>}
     </div>
   );
-
-  useEffect(() => {
-    if (currentUser?.firstLogin) setShowOnboard(true);
-  }, [currentUser]);
-
-  const dismissOnboard = () => {
-    // mark firstLogin false in store
-    if (currentUser) {
-      const users = useStore.getState().users.map((u) => u.id === currentUser.id ? { ...u, firstLogin: false } : u);
-      setUsers(users);
-    }
-    setShowOnboard(false);
-  };
 
   return (
     <div className="container">
@@ -280,27 +262,6 @@ export default function Dashboard() {
           )}
         </div>
       </div>
-      {showOnboard && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(2,6,23,0.6)', zIndex: 1400, display: 'grid', placeItems: 'center', padding: 24 }}>
-          <div style={{ width: '100%', maxWidth: 900, background: '#fff', borderRadius: 12, padding: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h2 style={{ margin: 0 }}>Welcome to your branch</h2>
-                <p style={{ margin: '6px 0 0 0', color: '#6b7280' }}>We set up default access to Dashboard, POS and Products for your branch. Choose where you'd like to go first.</p>
-              </div>
-              <button className="btn secondary" onClick={dismissOnboard}>Skip</button>
-            </div>
-
-            <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-              <button className="btn" onClick={() => { navigate('/dashboard'); dismissOnboard(); }} style={{ flex: 1 }}>Open Dashboard</button>
-              <button className="btn" onClick={() => { navigate('/pos'); dismissOnboard(); }} style={{ flex: 1 }}>Open POS</button>
-              <button className="btn" onClick={() => { navigate('/products'); dismissOnboard(); }} style={{ flex: 1 }}>Open Products</button>
-            </div>
-
-            <div style={{ marginTop: 18, color: '#475569' }}>You can change these permissions later from the Staff Permissions page.</div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

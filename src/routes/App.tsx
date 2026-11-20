@@ -174,7 +174,7 @@ export default function App() {
       <InstallPrompt />
       <FirebaseSyncWrapper>
         <VoiceAssistant />
-        <Suspense fallback={<SplashScreen />}>
+        <Suspense fallback={<div className="route-loading" role="status" aria-live="polite">Loading page...</div>}>
           <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/admin-login" element={<Navigate to="/login" replace />} />

@@ -21,7 +21,6 @@ export interface User {
   staffNumber: string;
   active: boolean;
   createdAt: string;
-  firstLogin?: boolean;
 }
 
 export function normalizeUsers(users: User[]) {
@@ -487,7 +486,7 @@ export const useStore = create<StoreState>()(
         return next;
       }),
       createStaffAccount: (user) => set((state) => {
-        const newUser = { ...user, firstLogin: true };
+        const newUser = { ...user };
         const nextUsers = normalizeUsers([...state.users, newUser]);
         const nextPermissions = { ...state.staffPermissions };
         if (!nextPermissions[newUser.id]?.[newUser.branchId]) {
@@ -497,10 +496,10 @@ export const useStore = create<StoreState>()(
         return { users: nextUsers, staffPermissions: nextPermissions };
       }),
       bulkCreateStaffAccounts: (users) => set((state) => {
-        const toAdd = users.map((u: any) => ({ ...u, firstLogin: true }));
+        const toAdd = users.map((user) => ({ ...user }));
         const merged = [...state.users.filter((item) => !users.some((newUser) => newUser.id === item.id)), ...toAdd];
         const nextPermissions = { ...state.staffPermissions };
-        toAdd.forEach((u: any) => {
+        toAdd.forEach((u) => {
           if (!nextPermissions[u.id]?.[u.branchId]) {
             nextPermissions[u.id] = { ...(nextPermissions[u.id] || {}), [u.branchId]: DEFAULT_STAFF_PERMISSIONS };
           }
