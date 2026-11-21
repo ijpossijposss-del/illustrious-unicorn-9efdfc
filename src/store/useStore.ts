@@ -809,7 +809,7 @@ export const useStore = create<StoreState>()(
     {
       name: 'jann-pos-store',
       partialize: (state) => ({
-        currentUser: state.rememberMe ? state.currentUser : null,
+        currentUser: state.currentUser,
         users: state.users,
         products: state.products,
         branches: state.branches,
@@ -828,8 +828,8 @@ export const useStore = create<StoreState>()(
         receiptSettings: state.receiptSettings,
         staffPermissions: state.staffPermissions,
         selectedBranch: state.selectedBranch,
-        isAuthenticated: state.rememberMe && state.isAuthenticated,
-        rememberMe: state.rememberMe,
+        isAuthenticated: state.isAuthenticated,
+        rememberMe: true,
         cart: state.cart,
         discount: state.discount,
       }),

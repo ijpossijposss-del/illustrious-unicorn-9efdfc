@@ -98,7 +98,7 @@ export async function syncAuthenticatedUser(firebaseUser: FirebaseUser) {
     users,
     staffPermissions,
     selectedBranch: role === 'admin' ? currentState.selectedBranch : safeProfile.branchId,
-    rememberMe: false,
+    rememberMe: true,
   });
   return safeProfile;
 }

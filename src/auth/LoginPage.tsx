@@ -13,7 +13,6 @@ export default function LoginPage() {
   const currentUser = useStore((state) => state.currentUser);
   const [username, setUsername] = useState(getItem('local', 'jann-pos-username') || '');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(getItem('local', 'jann-pos-remember') === 'true');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -28,8 +27,8 @@ export default function LoginPage() {
     try {
       const credential = await signInWithEmailAndPassword(auth, usernameToAuthEmail(username), password);
       const user = await syncAuthenticatedUser(credential.user);
-      setItem('local', 'jann-pos-remember', rememberMe ? 'true' : 'false');
-      setItem('local', 'jann-pos-username', rememberMe ? username : '');
+      setItem('local', 'jann-pos-remember', 'true');
+      setItem('local', 'jann-pos-username', username);
       navigate(user.role === 'admin' ? '/dashboard' : '/pos');
     } catch (error) {
       if (auth.currentUser) {
@@ -53,10 +52,6 @@ export default function LoginPage() {
             <input className="input" autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Admin email or staff name" required />
           </label>
           <input className="input" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required />
-          <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
-            Remember me
-          </label>
           <button className="btn" type="submit" disabled={busy}>{busy ? 'Please wait…' : 'Sign in'}</button>
         </form>
         <p style={{ color: '#6b7280', fontSize: 12, marginTop: 12 }}>The project owner signs in with the Firebase account email and password. Staff sign in with the names and passwords created by the admin.</p>

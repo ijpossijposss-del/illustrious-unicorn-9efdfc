@@ -54,3 +54,9 @@ test('login no longer exposes initial-admin setup', async ({ page }) => {
   await page.goto('/login');
   await expect(page.getByRole('button', { name: 'Set up initial admin' })).toHaveCount(0);
 });
+
+test('login is persistent and no remember-me option is required', async ({ page }) => {
+  await page.goto('/login');
+  await expect(page.getByText('Remember me')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
+});

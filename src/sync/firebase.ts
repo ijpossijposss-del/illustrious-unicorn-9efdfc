@@ -1,5 +1,5 @@
 import { getApp, getApps, initializeApp } from 'firebase/app';
-import { connectAuthEmulator, getAuth } from 'firebase/auth';
+import { browserLocalPersistence, connectAuthEmulator, getAuth, setPersistence } from 'firebase/auth';
 import { connectDatabaseEmulator, getDatabase } from 'firebase/database';
 
 const firebaseConfig = {
@@ -17,6 +17,10 @@ export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const database = getDatabase(app);
+
+void setPersistence(auth, browserLocalPersistence).catch((error) => {
+  console.error('Could not enable persistent Firebase authentication.', error);
+});
 
 if (import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_URL) {
   connectAuthEmulator(auth, import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_URL, { disableWarnings: true });
